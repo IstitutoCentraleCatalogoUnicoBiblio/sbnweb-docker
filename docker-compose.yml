@@ -1,0 +1,28 @@
+version: '2.0'
+
+services:
+  sbnweb-db:
+    build: db
+    ports:
+    - "5432:5432"
+    environment: 
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes: 
+    - ./runtime-data/db_data:/var/lib/postgresql/data
+
+  sbnweb-app:
+    build: app
+    ports:
+     - "8080:8080"
+    depends_on:
+    - sbnweb-db
+    volumes: 
+    - ./conf/sbnweb.conf:/home/jboss/sbnweb.conf:ro
+    - ./conf/offlineExportUnimarc.linux.cfg:/export/exportUnimarc/dp/offlineExportUnimarc.linux.cfg:ro
+    - ./conf/SbnWebPostgres-ds.xml:/usr/local/jboss-4.2.3.GA/server/default/deploy/SbnWebPostgres-ds.xml:ro
+    - ./conf/downloadSBW.txt:/export/exportUnimarc/dp/export/downloadSBW.txt:ro
+    - ./runtime-data/app_data/log:/usr/local/jboss-4.2.3.GA/server/default/log
+    - ./runtime-data/app_data/download:/home/jboss/sbn/download
+    - ./runtime-data/app_data/export/db_export:/export/exportUnimarc/db_export
+    - ./runtime-data/app_data/export/input/:/export/exportUnimarc/dp/input
+    - ./runtime-data/app_data/export/unimarc/:/export/exportUnimarc/dp/unimarc
