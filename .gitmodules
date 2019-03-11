@@ -1,0 +1,3 @@
+[submodule "app/sbnweb"]
+	path = app/sbnweb
+	url = https://github.com/IstitutoCentraleCatalogoUnicoBiblio/SBNWeb-Open.git

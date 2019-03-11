@@ -65,7 +65,7 @@ Eseguire il comando:
 
 ## File di configurazione
 
-Nella cartella
+Nella cartella:
 
     sbnweb-docker/conf
 
