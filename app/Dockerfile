@@ -5,20 +5,24 @@ LABEL MANTAINER=ICCU
 #copia codice sorgente
 COPY sbnweb /sbnweb-src
 
+#compilazione unimarcmodel
+WORKDIR /sbnweb-src/BuildSBNCastorModel_Client
+RUN mvn clean install && \
+	cp /sbnweb-src/BuildSBNCastorModel_Client/target/unimarcmodel.jar /sbnweb-src/SBNWeb/lib/common && \
+	cp /sbnweb-src/BuildSBNCastorModel_Client/target/unimarcmodel.jar /sbnweb-src/sbnmarc/lib
+
 #compilazione modulo SBNWeb
 WORKDIR /sbnweb-src/SBNWeb
 RUN mv local-settings.properties.template local-settings.properties && \
-	mvn clean && \
-	mvn install
+	mvn clean install -P docker
 
 #compilazione modulo SBNMarc
 WORKDIR /sbnweb-src/sbnmarc
 RUN mv local-settings.properties.template local-settings.properties && \
-	mvn clean && \
-	mvn install
+	mvn clean install -P docker
 
-	
-FROM ubuntu:16.04 AS UNIMARC_BUILDER
+
+FROM lpenz/debian-etch-amd64 AS UNIMARC_BUILDER
 
 #aggiornamento sistema linux
 RUN set -e; apt-get update
@@ -53,18 +57,21 @@ RUN useradd -m export -d ${EXPORT_HOME} && \
 
 #aggiornamento sistema linux
 RUN apt-get update && \
-	apt-get install -y wget zip unzip less gosu
+	apt-get install -y wget zip unzip less gosu locales
+
+RUN localedef -i it_IT -c -f UTF-8 -A /usr/share/locale/locale.alias it_IT.UTF-8
+ENV LANG it_IT.UTF-8
 
 WORKDIR /tmp
 
 #download JBoss AS runtime
 RUN set -e; \
-    wget -q -O ${JBOSS_FILE}.zip ${JBOSS_URL}
+	wget -q -O ${JBOSS_FILE}.zip ${JBOSS_URL}
 
 RUN	cd ${DEST_DIR} && \
 	unzip /tmp/${JBOSS_FILE}.zip && \
-    rm -rf ${DEST_DIR}/${JBOSS_FILE}/server/all && \
-    rm -rf ${DEST_DIR}/${JBOSS_FILE}/server/minimal && \
+	rm -rf ${DEST_DIR}/${JBOSS_FILE}/server/all && \
+	rm -rf ${DEST_DIR}/${JBOSS_FILE}/server/minimal && \
 	rm -f /tmp/${JBOSS_FILE}.zip
 
 #personalizzazione configurazione JBoss
@@ -82,7 +89,7 @@ COPY --from=SBNWEB_BUILDER /sbnweb-src/SBNWeb/build/sbn.ear ${SERVER_DIR}/deploy
 COPY --from=SBNWEB_BUILDER /sbnweb-src/sbnmarc/target/sbnMarc.ear ${SERVER_DIR}/deploy
 COPY --from=UNIMARC_BUILDER /home/export/workspace/cdt/offlineExportUnimarc/Debug/offlineExportUnimarc ${EXPORT_HOME}/exportUnimarc/dp
 
-RUN apt-get install -y lib32stdc++6 && \
+RUN apt-get install -y lib32stdc++6 gawk && \
 	apt-get clean
 
 #fix permessi
@@ -96,7 +103,7 @@ RUN chown -R export:export ${EXPORT_HOME} && \
 	chmod 775 offlineExportUnimarc
 RUN chmod 775 ${JUSER_HOME}/fix-libs.sh && ${JUSER_HOME}/fix-libs.sh
 
-EXPOSE 8080
+EXPOSE 8080 8009
 
 VOLUME ${SERVER_DIR}/log
 VOLUME ${SERVER_DIR}/data

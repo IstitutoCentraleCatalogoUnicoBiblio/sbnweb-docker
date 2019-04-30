@@ -5,9 +5,10 @@ services:
     build: db
     ports:
     - "5432:5432"
-    environment: 
+    environment:
     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes: 
+    - TZ=${TIME_ZONE}
+    volumes:
     - ./runtime-data/db_data:/var/lib/postgresql/data
 
   sbnweb-app:
@@ -16,7 +17,9 @@ services:
      - "8080:8080"
     depends_on:
     - sbnweb-db
-    volumes: 
+    environment:
+    - TZ=${TIME_ZONE}
+    volumes:
     - ./conf/sbnweb.conf:/home/jboss/sbnweb.conf:ro
     - ./conf/offlineExportUnimarc.linux.cfg:/export/exportUnimarc/dp/offlineExportUnimarc.linux.cfg:ro
     - ./conf/SbnWebPostgres-ds.xml:/usr/local/jboss-4.2.3.GA/server/default/deploy/SbnWebPostgres-ds.xml:ro
